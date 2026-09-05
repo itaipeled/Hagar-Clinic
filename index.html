@@ -228,6 +228,7 @@
             gap: 10px;
             padding: 8px 14px;
             border-radius: 10px;
+            overflow: hidden;
         }
         .service-item.diag { background: var(--teal-soft); }
         .service-item.treat { background: var(--peach-soft); }
@@ -252,14 +253,18 @@
             min-width: 0;
         }
         .service-item .service-name {
-            font-size: 1.15rem;
+            font-size: 0.95rem;
             color: var(--ink);
             font-weight: 700;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
         .service-item .service-desc {
-            font-size: 1rem;
+            font-size: 0.82rem;
             color: var(--stone);
             line-height: 1.35;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         /* ציטוט מעודד */
@@ -326,9 +331,17 @@
             align-items: center;
             gap: 14px;
         }
-        .contact-item .c-icon { font-size: 2rem; }
-        .contact-item .c-label { font-size: 0.95rem; color: var(--stone); }
-        .contact-item .c-value { font-size: 1.3rem; font-weight: 700; color: var(--ink); }
+        .contact-item .c-icon { font-size: 1.7rem; flex-shrink: 0; }
+        .contact-item .c-label { font-size: 0.85rem; color: var(--stone); white-space: nowrap; }
+        .contact-item .c-value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .contact-item > div:last-child { min-width: 0; overflow: hidden; }
     </style>
 </head>
 <body>
