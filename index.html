@@ -238,11 +238,12 @@
             gap: 8px;
             padding: 6px 12px;
             border-radius: 9px;
+            border: 1.5px solid transparent;
             overflow: hidden;
         }
-        .service-item.diag { background: var(--teal-soft); }
-        .service-item.treat { background: var(--peach-soft); }
-        .service-item.groups { background: var(--lavender-soft); }
+        .service-item.diag { background: var(--teal-soft); border-color: var(--teal); }
+        .service-item.treat { background: var(--peach-soft); border-color: var(--peach); }
+        .service-item.groups { background: var(--lavender-soft); border-color: var(--lavender); }
         .service-tag {
             font-size: 0.68rem;
             font-weight: 700;
@@ -320,7 +321,15 @@
             color: var(--ink);
             line-height: 1.3;
         }
-        .faq-counter { font-size: 0.7rem; color: var(--stone); margin-top: 4px; font-variant-numeric: tabular-nums; }
+        .faq-dots {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow: hidden;
+            gap: 5px;
+            margin-top: 6px;
+        }
+        .faq-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hairline); flex-shrink: 0; }
+        .faq-dot.active { background: var(--lavender); }
 
         /* פרטי יצירת קשר */
         .contact-section {
@@ -408,7 +417,7 @@
             <div class="faq-content">
                 <div class="faq-question" id="faqQ"></div>
                 <div class="faq-answer" id="faqA"></div>
-                <div class="faq-counter" id="faqCounter"></div>
+                <div class="faq-dots" id="faqDots"></div>
             </div>
         </div>
 
@@ -583,8 +592,9 @@
         let faqIndex = 0;
         const FAQ_DURATION = 9000;
 
-        function updateFaqCounter() {
-            document.getElementById('faqCounter').textContent = (faqIndex + 1) + ' / ' + faqs.length;
+        function renderFaqDots() {
+            document.getElementById('faqDots').innerHTML = faqs.map((_, i) =>
+                `<div class="faq-dot ${i === faqIndex ? 'active' : ''}"></div>`).join('');
         }
         function showFaq(i) {
             const content = document.querySelector('.faq-content');
@@ -592,7 +602,7 @@
             setTimeout(() => {
                 document.getElementById('faqQ').textContent = faqs[i].q;
                 document.getElementById('faqA').textContent = faqs[i].a;
-                updateFaqCounter();
+                renderFaqDots();
                 content.style.opacity = 1;
             }, 500);
         }
@@ -671,6 +681,7 @@
         window.addEventListener('resize', fitToScreen);
         setTimeout(fitToScreen, 800);  // ריצה נוספת אחרי שהפונט/תמונות נטענו במלואם
         setTimeout(fitToScreen, 2000); // ריצה שלישית ליתר ביטחון על מכשירים איטיים
+        setInterval(fitToScreen, 5000); // בדיקה חוזרת קבועה - מתקנת כל פער שנוצר לאורך זמן
     </script>
 </body>
 </html>
