@@ -272,7 +272,7 @@
         }
         .quote-text {
             font-family: 'KtavYadCLM', 'Assistant', sans-serif;
-            font-size: 2.1rem;
+            font-size: 1.6rem;
             font-weight: 500;
             color: #f2a123;
             font-style: italic;
@@ -625,20 +625,15 @@
 
             wrapper.style.transform = 'none';
 
-            const prevFlex = mainEl.style.flex;
-            const prevHeight = mainEl.style.height;
-            const prevOverflow = mainEl.style.overflowY;
+            // חשוב: משאירים את main-container בגודל הטבעי שלו לצמיתות - בלי לחתוך שום דבר בפנים.
+            // ההתאמה למסך נעשית אך ורק על ידי כיווץ (scale) של כל התוכן יחד, לא על ידי גלילה/חיתוך פנימי.
             mainEl.style.flex = 'none';
             mainEl.style.height = 'auto';
             mainEl.style.overflowY = 'visible';
 
             const naturalHeight = header.offsetHeight + mainEl.scrollHeight;
-
-            mainEl.style.flex = prevFlex;
-            mainEl.style.height = prevHeight;
-            mainEl.style.overflowY = prevOverflow;
-
             const available = window.innerHeight;
+
             if (naturalHeight > available) {
                 const ratio = Math.max(0.5, available / naturalHeight);
                 wrapper.style.transform = 'scale(' + ratio + ')';
