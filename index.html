@@ -644,8 +644,7 @@
 
             wrapper.style.transform = 'none';
 
-            // חשוב: משאירים את main-container בגודל הטבעי שלו לצמיתות - בלי לחתוך שום דבר בפנים.
-            // ההתאמה למסך נעשית אך ורק על ידי כיווץ (scale) של כל התוכן יחד, לא על ידי גלילה/חיתוך פנימי.
+            // תחילה בודקים בגודל טבעי (לא חתוך) כמה מקום התוכן צריך באמת
             mainEl.style.flex = 'none';
             mainEl.style.height = 'auto';
             mainEl.style.overflowY = 'visible';
@@ -654,10 +653,15 @@
             const available = window.innerHeight;
 
             if (naturalHeight > available) {
+                // התוכן גדול מדי - מכווצים את הכל יחד כדי שהכל יכנס בלי לחתוך
                 const ratio = Math.max(0.5, available / naturalHeight);
                 wrapper.style.transform = 'scale(' + ratio + ')';
             } else {
+                // התוכן כבר נכנס בקלות - ממלאים את כל הגובה הפנוי (בלי רווח ריק למטה)
                 wrapper.style.transform = 'none';
+                mainEl.style.flex = '1';
+                mainEl.style.height = '';
+                mainEl.style.overflowY = 'auto';
             }
         }
         window.addEventListener('load', fitToScreen);
