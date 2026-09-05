@@ -114,7 +114,7 @@
             gap: 14px;
             flex-wrap: wrap;
             flex-shrink: 0;
-            height: clamp(130px, 20vh, 195px);
+            height: clamp(150px, 23vh, 215px);
         }
         .hero-card {
             background: var(--panel);
@@ -293,32 +293,31 @@
         /* קרוסלת שאלות ותשובות להורים */
         .faq-banner {
             flex-shrink: 0;
-            height: clamp(105px, 15vh, 160px);
+            height: clamp(90px, 12vh, 130px);
             background: var(--panel);
-            border-radius: 18px;
+            border-radius: 16px;
             border: 1px solid var(--hairline);
             border-right: 4px solid var(--lavender);
-            padding: 12px 26px;
+            padding: 8px 22px;
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
+            overflow: hidden;
         }
-        .faq-icon { font-size: 2.4rem; flex-shrink: 0; }
-        .faq-content { flex: 1; transition: opacity 0.5s ease; }
+        .faq-icon { font-size: 1.9rem; flex-shrink: 0; }
+        .faq-content { flex: 1; transition: opacity 0.5s ease; min-width: 0; }
         .faq-question {
-            font-size: 1.3rem;
+            font-size: 1rem;
             font-weight: 800;
             color: var(--lavender);
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .faq-answer {
-            font-size: 0.92rem;
+            font-size: 0.88rem;
             color: var(--ink);
-            line-height: 1.4;
+            line-height: 1.3;
         }
-        .faq-dots { display: flex; gap: 6px; margin-top: 10px; }
-        .faq-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hairline); }
-        .faq-dot.active { background: var(--lavender); }
+        .faq-counter { font-size: 0.7rem; color: var(--stone); margin-top: 4px; font-variant-numeric: tabular-nums; }
 
         /* פרטי יצירת קשר */
         .contact-section {
@@ -341,14 +340,15 @@
         .contact-item .c-icon { font-size: 1.4rem; flex-shrink: 0; }
         .contact-item .c-label { font-size: 0.75rem; color: var(--stone); white-space: nowrap; }
         .contact-item .c-value {
-            font-size: 1.05rem;
+            font-size: 0.88rem;
             font-weight: 700;
             color: var(--ink);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            line-height: 1.25;
         }
-        .contact-item > div:last-child { min-width: 0; overflow: hidden; }
+        .contact-item > div:last-child { min-width: 0; overflow: visible; }
     </style>
 </head>
 <body>
@@ -405,7 +405,7 @@
             <div class="faq-content">
                 <div class="faq-question" id="faqQ"></div>
                 <div class="faq-answer" id="faqA"></div>
-                <div class="faq-dots" id="faqDots"></div>
+                <div class="faq-counter" id="faqCounter"></div>
             </div>
         </div>
 
@@ -580,9 +580,8 @@
         let faqIndex = 0;
         const FAQ_DURATION = 9000;
 
-        function renderFaqDots() {
-            document.getElementById('faqDots').innerHTML = faqs.map((_, i) =>
-                `<div class="faq-dot ${i === faqIndex ? 'active' : ''}"></div>`).join('');
+        function updateFaqCounter() {
+            document.getElementById('faqCounter').textContent = (faqIndex + 1) + ' / ' + faqs.length;
         }
         function showFaq(i) {
             const content = document.querySelector('.faq-content');
@@ -590,7 +589,7 @@
             setTimeout(() => {
                 document.getElementById('faqQ').textContent = faqs[i].q;
                 document.getElementById('faqA').textContent = faqs[i].a;
-                renderFaqDots();
+                updateFaqCounter();
                 content.style.opacity = 1;
             }, 500);
         }
