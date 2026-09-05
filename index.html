@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
     <title>הגר נגב פלד - מסך קבלה</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +30,9 @@
             --lavender-soft: #f0eaf7;
         }
 
+        html {
+            color-scheme: light only;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; overflow: hidden; }
 
@@ -88,10 +92,10 @@
         /* גוף העמוד */
         .main-container {
             flex: 1;
-            padding: 24px 40px;
+            padding: 16px 32px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 14px;
             justify-content: space-evenly;
             max-width: 1600px;
             width: 100%;
@@ -106,7 +110,7 @@
             gap: 16px;
             flex-wrap: wrap;
             flex-shrink: 0;
-            height: 260px;
+            height: 225px;
         }
         .hero-card {
             background: var(--panel);
@@ -258,7 +262,7 @@
         .quote-banner {
             background: linear-gradient(135deg, var(--teal-soft), var(--lavender-soft));
             border-radius: 20px;
-            padding: 16px 30px;
+            padding: 10px 30px;
             text-align: center;
             flex-shrink: 0;
         }
@@ -273,13 +277,13 @@
         /* קרוסלת שאלות ותשובות להורים */
         .faq-banner {
             flex-shrink: 0;
-            min-height: 200px;
-            max-height: 320px;
+            min-height: 150px;
+            max-height: 220px;
             background: var(--panel);
             border-radius: 20px;
             border: 1px solid var(--hairline);
             border-right: 4px solid var(--lavender);
-            padding: 30px 44px;
+            padding: 18px 34px;
             display: flex;
             align-items: center;
             gap: 18px;
