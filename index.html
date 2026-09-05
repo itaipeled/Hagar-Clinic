@@ -655,6 +655,11 @@
             const header = wrapper.querySelector('.header-bar');
             const mainEl = wrapper.querySelector('.main-container');
 
+            // גובה מדויק בפיקסלים, לא תלוי בחישוב vh של הדפדפן
+            const exactHeight = window.innerHeight;
+            document.body.style.height = exactHeight + 'px';
+            wrapper.style.height = exactHeight + 'px';
+
             wrapper.style.transform = 'none';
 
             // תחילה בודקים בגודל טבעי (לא חתוך) כמה מקום התוכן צריך באמת
@@ -663,7 +668,7 @@
             mainEl.style.overflowY = 'visible';
 
             const naturalHeight = header.offsetHeight + mainEl.scrollHeight;
-            const available = window.innerHeight;
+            const available = exactHeight;
 
             if (naturalHeight > available) {
                 // התוכן גדול מדי - מכווצים את הכל יחד כדי שהכל יכנס בלי לחתוך
