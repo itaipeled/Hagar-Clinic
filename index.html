@@ -41,8 +41,12 @@
             background: var(--bg);
             color: var(--ink);
             height: 100vh;
+        }
+        .scale-wrapper {
             display: flex;
             flex-direction: column;
+            height: 100%;
+            transform-origin: top center;
         }
 
         /* כותרת עליונה */
@@ -334,6 +338,7 @@
     <audio id="bgMusic" preload="none"></audio>
 
 
+    <div class="scale-wrapper" id="scaleWrapper">
     <div class="header-bar">
         <div class="clinic-title-group">
             <img class="clinic-logo" src="https://hagarnegev.co.il/wp-content/uploads/2024/11/cropped-Favicon.png" alt="לוגו הגר נגב פלד">
@@ -416,6 +421,7 @@
             </div>
         </div>
 
+    </div>
     </div>
 
     <script>
@@ -614,10 +620,11 @@
     <script>
         /* ===== התאמה אוטומטית לגובה המסך בפועל - מבטיח שלא יהיה צורך בגלילה ===== */
         function fitToScreen() {
-            const header = document.querySelector('.header-bar');
-            const mainEl = document.querySelector('.main-container');
+            const wrapper = document.getElementById('scaleWrapper');
+            const header = wrapper.querySelector('.header-bar');
+            const mainEl = wrapper.querySelector('.main-container');
 
-            document.body.style.zoom = 1;
+            wrapper.style.transform = 'none';
 
             const prevFlex = mainEl.style.flex;
             const prevHeight = mainEl.style.height;
@@ -635,14 +642,15 @@
             const available = window.innerHeight;
             if (naturalHeight > available) {
                 const ratio = Math.max(0.5, available / naturalHeight);
-                document.body.style.zoom = ratio;
+                wrapper.style.transform = 'scale(' + ratio + ')';
             } else {
-                document.body.style.zoom = 1;
+                wrapper.style.transform = 'none';
             }
         }
         window.addEventListener('load', fitToScreen);
         window.addEventListener('resize', fitToScreen);
-        setTimeout(fitToScreen, 800); // ריצה נוספת אחרי שהפונט/תמונות נטענו במלואם
+        setTimeout(fitToScreen, 800);  // ריצה נוספת אחרי שהפונט/תמונות נטענו במלואם
+        setTimeout(fitToScreen, 2000); // ריצה שלישית ליתר ביטחון על מכשירים איטיים
     </script>
 </body>
 </html>
