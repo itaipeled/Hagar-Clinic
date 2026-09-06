@@ -118,7 +118,7 @@
             border-radius: 18px;
             border: 1px solid var(--hairline);
             padding: 12px 22px;
-            flex: 1.6;
+            flex: 1;
             min-width: 260px;
             height: 100%;
             text-align: center;
@@ -146,45 +146,16 @@
         }
         .date { font-size: 1.15rem; color: var(--stone); }
 
-        .weather-card {
-            background: var(--panel);
-            border-radius: 18px;
-            border: 1px solid var(--hairline);
-            padding: 10px 18px;
-            flex: 1;
-            min-width: 200px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 8px;
-        }
-        .weather-now {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            min-width: 0;
-        }
-        .weather-now > div { min-width: 0; overflow: hidden; }
-        .weather-now .icon { font-size: 3.4rem; flex-shrink: 0; }
-        .weather-now .temp { font-size: 2.1rem; font-weight: 800; color: var(--peach); }
-        .weather-now .desc {
-            font-size: 1.05rem;
-            color: var(--stone);
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
         /* שירותי הקליניקה - כרטיס ריבועי-קומפקטי ליד השעון ומזג האוויר */
         .services-section {
             background: var(--panel);
             border-radius: 18px;
             border: 1px solid var(--hairline);
-            padding: 10px 16px;
+            padding: 12px 20px;
             display: flex;
             flex-direction: column;
-            flex: 1;
-            min-width: 200px;
+            flex: 1.3;
+            min-width: 220px;
             height: 100%;
         }
         .section-title {
@@ -247,14 +218,14 @@
             min-width: 0;
         }
         .service-item .service-name {
-            font-size: 1.08rem;
+            font-size: 1.18rem;
             color: var(--ink);
             font-weight: 700;
             overflow-wrap: break-word;
             word-break: break-word;
         }
         .service-item .service-desc {
-            font-size: 0.94rem;
+            font-size: 1.02rem;
             color: var(--stone);
             line-height: 1.35;
             overflow-wrap: break-word;
@@ -285,13 +256,13 @@
         .faq-icon { font-size: 2.8rem; flex-shrink: 0; }
         .faq-content { flex: 1; transition: opacity 0.5s ease; min-width: 0; }
         .faq-question {
-            font-size: 1.25rem;
+            font-size: 1.4rem;
             font-weight: 800;
             color: var(--lavender);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .faq-answer {
-            font-size: 1.08rem;
+            font-size: 1.2rem;
             color: var(--ink);
             line-height: 1.35;
         }
@@ -328,9 +299,9 @@
             gap: 10px;
             margin-bottom: 8px;
         }
-        .review-name { font-size: 1.3rem; font-weight: 800; color: var(--ink); }
+        .review-name { font-size: 1.45rem; font-weight: 800; color: var(--ink); }
         .review-badge {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             font-weight: 700;
             padding: 2px 10px;
             border-radius: 999px;
@@ -339,9 +310,9 @@
         }
         .review-badge.google { background: #4285F4; }
         .review-badge.facebook { background: #3b5998; }
-        .review-stars { font-size: 1rem; color: var(--peach); }
+        .review-stars { font-size: 1.1rem; color: var(--peach); }
         .review-text {
-            font-size: 1.15rem;
+            font-size: 1.3rem;
             color: var(--stone);
             line-height: 1.35;
             overflow-wrap: break-word;
@@ -370,15 +341,15 @@
             background: var(--panel);
             border-radius: 16px;
             border: 1px solid var(--hairline);
-            padding: 16px 22px;
+            padding: 18px 24px;
             display: flex;
             align-items: center;
             gap: 16px;
         }
-        .contact-item .c-icon { font-size: 2.2rem; flex-shrink: 0; }
-        .contact-item .c-label { font-size: 1.05rem; color: var(--stone); white-space: nowrap; }
+        .contact-item .c-icon { font-size: 2.4rem; flex-shrink: 0; }
+        .contact-item .c-label { font-size: 1.15rem; color: var(--stone); white-space: nowrap; }
         .contact-item .c-value {
-            font-size: 1.2rem;
+            font-size: 1.32rem;
             font-weight: 700;
             color: var(--ink);
             white-space: nowrap;
@@ -413,15 +384,6 @@
                 <div class="welcome-line">ברוכים הבאים למרכז הגר נגב פלד</div>
                 <div class="time" id="clock">00:00</div>
                 <div class="date" id="date">טוען תאריך...</div>
-            </div>
-            <div class="weather-card">
-                <div class="weather-now">
-                    <div class="icon" id="cwIcon">☀️</div>
-                    <div>
-                        <div class="temp" id="cwTemp">--°</div>
-                        <div class="desc" id="cwDesc">תל אביב · טוען...</div>
-                    </div>
-                </div>
             </div>
             <div class="services-section">
                 <div class="section-title">🌱 השירותים שלנו</div>
@@ -474,14 +436,14 @@
                 <div class="c-icon">📍</div>
                 <div>
                     <div class="c-label">כתובת</div>
-                    <div class="c-value" style="font-size:1.05rem;">אוסקר שינדלר 40, תל אביב</div>
+                    <div class="c-value" style="font-size:1.15rem;">אוסקר שינדלר 40, תל אביב</div>
                 </div>
             </div>
             <div class="contact-item">
                 <div class="c-icon">✉️</div>
                 <div>
                     <div class="c-label">אימייל</div>
-                    <div class="c-value" dir="ltr" style="font-size:0.95rem; text-align: right;">hagarnegev@gmail.com</div>
+                    <div class="c-value" dir="ltr" style="font-size:1.05rem; text-align: right;">hagarnegev@gmail.com</div>
                 </div>
             </div>
         </div>
@@ -510,40 +472,6 @@
         }
         updateClock();
         setInterval(updateClock, 1000);
-
-        const WMO_ICON = {
-            0: ['☀️', 'בהיר'], 1: ['🌤️', 'בהיר בעיקר'], 2: ['⛅', 'מעונן חלקית'], 3: ['☁️', 'מעונן'],
-            45: ['🌫️', 'ערפל'], 48: ['🌫️', 'ערפל'],
-            51: ['🌦️', 'טפטוף'], 53: ['🌦️', 'טפטוף'], 55: ['🌦️', 'טפטוף'],
-            61: ['🌧️', 'גשם קל'], 63: ['🌧️', 'גשם'], 65: ['🌧️', 'גשם חזק'],
-            80: ['🌦️', 'ממטרים'], 81: ['🌦️', 'ממטרים'], 82: ['⛈️', 'ממטרים עזים'],
-            95: ['⛈️', 'סופת רעמים'], 96: ['⛈️', 'סופת רעמים'], 99: ['⛈️', 'סופת רעמים']
-        };
-        function weatherIcon(code, isNight) {
-            const entry = WMO_ICON[code] || ['🌡️', 'לא ידוע'];
-            if (code === 0 && isNight) return ['🌙', 'בהיר'];
-            if (code === 1 && isNight) return ['🌙', 'בהיר בעיקר'];
-            return entry;
-        }
-        async function loadWeather() {
-            try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-                    `&current=temperature_2m,relative_humidity_2m,weather_code,is_day` +
-                    `&timezone=Asia%2FJerusalem`;
-                const res = await fetch(url);
-                const data = await res.json();
-
-                const cur = data.current;
-                const [icon, desc] = weatherIcon(cur.weather_code, cur.is_day === 0);
-                document.getElementById('cwIcon').textContent = icon;
-                document.getElementById('cwTemp').textContent = Math.round(cur.temperature_2m) + '°';
-                document.getElementById('cwDesc').textContent = 'תל אביב · ' + desc + ' · לחות ' + cur.relative_humidity_2m + '%';
-            } catch (e) {
-                console.error('Weather fetch failed', e);
-            }
-        }
-        loadWeather();
-        setInterval(loadWeather, 20 * 60 * 1000);
 
         /* ===== רשימת שירותים - גלילה רציפה (כמו טיקר המבזקים) ===== */
         const services = [
