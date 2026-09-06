@@ -127,7 +127,7 @@
             justify-content: center;
         }
         .greeting {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             color: var(--peach);
             font-weight: 600;
         }
@@ -137,14 +137,14 @@
             margin-top: 2px;
         }
         .time {
-            font-size: clamp(2.2rem, 5.8vw, 3.6rem);
+            font-size: clamp(2.8rem, 7vw, 4.4rem);
             font-weight: 800;
             line-height: 1;
             margin: 8px 0 6px;
             color: var(--ink);
             font-variant-numeric: tabular-nums;
         }
-        .date { font-size: 0.95rem; color: var(--stone); }
+        .date { font-size: 1.15rem; color: var(--stone); }
 
         .weather-card {
             background: var(--panel);
@@ -162,29 +162,18 @@
         .weather-now {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 16px;
             min-width: 0;
         }
         .weather-now > div { min-width: 0; overflow: hidden; }
-        .weather-now .icon { font-size: 1.9rem; flex-shrink: 0; }
-        .weather-now .temp { font-size: 1.35rem; font-weight: 800; color: var(--peach); }
+        .weather-now .icon { font-size: 3.4rem; flex-shrink: 0; }
+        .weather-now .temp { font-size: 2.1rem; font-weight: 800; color: var(--peach); }
         .weather-now .desc {
-            font-size: 0.76rem;
+            font-size: 1.05rem;
             color: var(--stone);
             overflow-wrap: break-word;
             word-break: break-word;
         }
-        .forecast-row { display: flex; gap: 6px; }
-        .forecast-day {
-            background: var(--peach-soft);
-            border-radius: 12px;
-            padding: 7px 5px;
-            text-align: center;
-            flex: 1;
-        }
-        .forecast-day .d-name { font-size: 0.78rem; color: var(--stone); }
-        .forecast-day .d-icon { font-size: 1.15rem; margin: 2px 0; }
-        .forecast-day .d-temp { font-size: 0.9rem; font-weight: 700; color: var(--ink); }
 
         /* שירותי הקליניקה - כרטיס ריבועי-קומפקטי ליד השעון ומזג האוויר */
         .services-section {
@@ -199,7 +188,7 @@
             height: 100%;
         }
         .section-title {
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             font-weight: 800;
             color: var(--ink);
             margin-bottom: 8px;
@@ -239,7 +228,7 @@
         .service-item.treat { background: var(--peach-soft); border-color: var(--peach); }
         .service-item.groups { background: var(--lavender-soft); border-color: var(--lavender); }
         .service-tag {
-            font-size: 0.74rem;
+            font-size: 0.85rem;
             font-weight: 700;
             padding: 3px 10px;
             border-radius: 999px;
@@ -258,14 +247,14 @@
             min-width: 0;
         }
         .service-item .service-name {
-            font-size: 0.92rem;
+            font-size: 1.08rem;
             color: var(--ink);
             font-weight: 700;
             overflow-wrap: break-word;
             word-break: break-word;
         }
         .service-item .service-desc {
-            font-size: 0.8rem;
+            font-size: 0.94rem;
             color: var(--stone);
             line-height: 1.35;
             overflow-wrap: break-word;
@@ -296,13 +285,13 @@
         .faq-icon { font-size: 2.8rem; flex-shrink: 0; }
         .faq-content { flex: 1; transition: opacity 0.5s ease; min-width: 0; }
         .faq-question {
-            font-size: 1.12rem;
+            font-size: 1.25rem;
             font-weight: 800;
             color: var(--lavender);
             margin-bottom: 8px;
         }
         .faq-answer {
-            font-size: 0.98rem;
+            font-size: 1.08rem;
             color: var(--ink);
             line-height: 1.35;
         }
@@ -339,9 +328,9 @@
             gap: 10px;
             margin-bottom: 8px;
         }
-        .review-name { font-size: 1.2rem; font-weight: 800; color: var(--ink); }
+        .review-name { font-size: 1.3rem; font-weight: 800; color: var(--ink); }
         .review-badge {
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             font-weight: 700;
             padding: 2px 10px;
             border-radius: 999px;
@@ -350,9 +339,9 @@
         }
         .review-badge.google { background: #4285F4; }
         .review-badge.facebook { background: #3b5998; }
-        .review-stars { font-size: 0.9rem; color: var(--peach); }
+        .review-stars { font-size: 1rem; color: var(--peach); }
         .review-text {
-            font-size: 1.05rem;
+            font-size: 1.15rem;
             color: var(--stone);
             line-height: 1.35;
             overflow-wrap: break-word;
@@ -386,10 +375,10 @@
             align-items: center;
             gap: 14px;
         }
-        .contact-item .c-icon { font-size: 1.55rem; flex-shrink: 0; }
-        .contact-item .c-label { font-size: 0.82rem; color: var(--stone); white-space: nowrap; }
+        .contact-item .c-icon { font-size: 1.85rem; flex-shrink: 0; }
+        .contact-item .c-label { font-size: 0.95rem; color: var(--stone); white-space: nowrap; }
         .contact-item .c-value {
-            font-size: 0.85rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--ink);
             white-space: nowrap;
@@ -433,7 +422,6 @@
                         <div class="desc" id="cwDesc">תל אביב · טוען...</div>
                     </div>
                 </div>
-                <div class="forecast-row" id="forecastRow"></div>
             </div>
             <div class="services-section">
                 <div class="section-title">🌱 השירותים שלנו</div>
@@ -486,14 +474,14 @@
                 <div class="c-icon">📍</div>
                 <div>
                     <div class="c-label">כתובת</div>
-                    <div class="c-value">אוסקר שינדלר 40, תל אביב</div>
+                    <div class="c-value" style="font-size:0.9rem;">אוסקר שינדלר 40, תל אביב</div>
                 </div>
             </div>
             <div class="contact-item">
                 <div class="c-icon">✉️</div>
                 <div>
                     <div class="c-label">אימייל</div>
-                    <div class="c-value" dir="ltr" style="text-align: right;">hagarnegev@gmail.com</div>
+                    <div class="c-value" dir="ltr" style="font-size:0.82rem; text-align: right;">hagarnegev@gmail.com</div>
                 </div>
             </div>
         </div>
@@ -541,8 +529,7 @@
             try {
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
                     `&current=temperature_2m,relative_humidity_2m,weather_code,is_day` +
-                    `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
-                    `&timezone=Asia%2FJerusalem&forecast_days=4`;
+                    `&timezone=Asia%2FJerusalem`;
                 const res = await fetch(url);
                 const data = await res.json();
 
@@ -551,22 +538,6 @@
                 document.getElementById('cwIcon').textContent = icon;
                 document.getElementById('cwTemp').textContent = Math.round(cur.temperature_2m) + '°';
                 document.getElementById('cwDesc').textContent = 'תל אביב · ' + desc + ' · לחות ' + cur.relative_humidity_2m + '%';
-
-                const days = data.daily;
-                const rowEl = document.getElementById('forecastRow');
-                rowEl.innerHTML = '';
-                for (let i = 1; i <= 3; i++) {
-                    const d = new Date(days.time[i]);
-                    const dayName = d.toLocaleDateString('he-IL', { weekday: 'short' });
-                    const [dIcon] = weatherIcon(days.weather_code[i], false);
-                    const hi = Math.round(days.temperature_2m_max[i]);
-                    rowEl.insertAdjacentHTML('beforeend', `
-                        <div class="forecast-day">
-                            <div class="d-name">${dayName}</div>
-                            <div class="d-icon">${dIcon}</div>
-                            <div class="d-temp">${hi}°</div>
-                        </div>`);
-                }
             } catch (e) {
                 console.error('Weather fetch failed', e);
             }
