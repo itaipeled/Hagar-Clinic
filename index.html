@@ -13,12 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&family=Varela+Round&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
     <style>
-        @font-face {
-            font-family: 'KtavYadCLM';
-            src: url('https://raw.githubusercontent.com/aharonium/fonts/master/Fonts/Hebrew%20Letters%20only/Culmus%20Project%20(GPL%20and%20GPL%2BFE)/Maxim%20Iorsh%20(GPL)/Fancy%20Fonts/ktav-yad/KtavYadCLM-MediumItalic.ttf') format('truetype');
-            font-weight: 500;
-            font-style: italic;
-        }
         :root {
             --bg: #fbf6ee;
             --panel: #ffffff;
@@ -117,7 +111,7 @@
             gap: 14px;
             flex-wrap: wrap;
             flex-shrink: 0;
-            height: clamp(150px, 23vh, 215px);
+            height: clamp(175px, 27vh, 250px);
         }
         .hero-card {
             background: var(--panel);
@@ -133,24 +127,24 @@
             justify-content: center;
         }
         .greeting {
-            font-size: 1.05rem;
+            font-size: 1.2rem;
             color: var(--peach);
             font-weight: 600;
         }
         .welcome-line {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             color: var(--stone);
             margin-top: 2px;
         }
         .time {
-            font-size: clamp(1.9rem, 5vw, 3.1rem);
+            font-size: clamp(2.2rem, 5.8vw, 3.6rem);
             font-weight: 800;
             line-height: 1;
-            margin: 6px 0 4px;
+            margin: 8px 0 6px;
             color: var(--ink);
             font-variant-numeric: tabular-nums;
         }
-        .date { font-size: 0.85rem; color: var(--stone); }
+        .date { font-size: 0.95rem; color: var(--stone); }
 
         .weather-card {
             background: var(--panel);
@@ -172,10 +166,10 @@
             min-width: 0;
         }
         .weather-now > div { min-width: 0; overflow: hidden; }
-        .weather-now .icon { font-size: 1.7rem; flex-shrink: 0; }
-        .weather-now .temp { font-size: 1.2rem; font-weight: 800; color: var(--peach); }
+        .weather-now .icon { font-size: 1.9rem; flex-shrink: 0; }
+        .weather-now .temp { font-size: 1.35rem; font-weight: 800; color: var(--peach); }
         .weather-now .desc {
-            font-size: 0.68rem;
+            font-size: 0.76rem;
             color: var(--stone);
             overflow-wrap: break-word;
             word-break: break-word;
@@ -188,9 +182,9 @@
             text-align: center;
             flex: 1;
         }
-        .forecast-day .d-name { font-size: 0.7rem; color: var(--stone); }
-        .forecast-day .d-icon { font-size: 1.02rem; margin: 2px 0; }
-        .forecast-day .d-temp { font-size: 0.8rem; font-weight: 700; color: var(--ink); }
+        .forecast-day .d-name { font-size: 0.78rem; color: var(--stone); }
+        .forecast-day .d-icon { font-size: 1.15rem; margin: 2px 0; }
+        .forecast-day .d-temp { font-size: 0.9rem; font-weight: 700; color: var(--ink); }
 
         /* שירותי הקליניקה - כרטיס ריבועי-קומפקטי ליד השעון ומזג האוויר */
         .services-section {
@@ -205,10 +199,10 @@
             height: 100%;
         }
         .section-title {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--ink);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .services-viewport {
             flex: 1;
@@ -245,9 +239,9 @@
         .service-item.treat { background: var(--peach-soft); border-color: var(--peach); }
         .service-item.groups { background: var(--lavender-soft); border-color: var(--lavender); }
         .service-tag {
-            font-size: 0.68rem;
+            font-size: 0.74rem;
             font-weight: 700;
-            padding: 2px 9px;
+            padding: 3px 10px;
             border-radius: 999px;
             color: #fff;
             flex-shrink: 0;
@@ -264,40 +258,24 @@
             min-width: 0;
         }
         .service-item .service-name {
-            font-size: 0.84rem;
+            font-size: 0.92rem;
             color: var(--ink);
             font-weight: 700;
             overflow-wrap: break-word;
             word-break: break-word;
         }
         .service-item .service-desc {
-            font-size: 0.72rem;
+            font-size: 0.8rem;
             color: var(--stone);
             line-height: 1.35;
             overflow-wrap: break-word;
             word-break: break-word;
         }
 
-        /* ציטוט מעודד */
-        .quote-banner {
-            background: linear-gradient(135deg, var(--teal-soft), var(--lavender-soft));
-            border-radius: 18px;
-            padding: clamp(4px, 1vh, 10px) 26px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        .quote-text {
-            font-family: 'KtavYadCLM', 'Assistant', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 500;
-            color: #f2a123;
-            font-style: italic;
-        }
-
         /* קרוסלת שאלות ותשובות להורים */
         .faq-banner {
             flex-shrink: 0;
-            height: clamp(90px, 12vh, 130px);
+            height: clamp(115px, 16vh, 170px);
             background: var(--panel);
             border-radius: 16px;
             border: 1px solid var(--hairline);
@@ -308,25 +286,25 @@
             gap: 12px;
             overflow: hidden;
         }
-        .faq-icon { font-size: 1.9rem; flex-shrink: 0; }
+        .faq-icon { font-size: 2.2rem; flex-shrink: 0; }
         .faq-content { flex: 1; transition: opacity 0.5s ease; min-width: 0; }
         .faq-question {
-            font-size: 1rem;
+            font-size: 1.15rem;
             font-weight: 800;
             color: var(--lavender);
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
         .faq-answer {
-            font-size: 0.88rem;
+            font-size: 1rem;
             color: var(--ink);
-            line-height: 1.3;
+            line-height: 1.35;
         }
         .faq-dots {
             display: flex;
             flex-wrap: nowrap;
             overflow: hidden;
             gap: 5px;
-            margin-top: 6px;
+            margin-top: 8px;
         }
         .faq-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hairline); flex-shrink: 0; }
         .faq-dot.active { background: var(--lavender); }
@@ -344,15 +322,15 @@
             background: var(--panel);
             border-radius: 14px;
             border: 1px solid var(--hairline);
-            padding: 10px 16px;
+            padding: 13px 18px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
-        .contact-item .c-icon { font-size: 1.4rem; flex-shrink: 0; }
-        .contact-item .c-label { font-size: 0.75rem; color: var(--stone); white-space: nowrap; }
+        .contact-item .c-icon { font-size: 1.55rem; flex-shrink: 0; }
+        .contact-item .c-label { font-size: 0.82rem; color: var(--stone); white-space: nowrap; }
         .contact-item .c-value {
-            font-size: 0.88rem;
+            font-size: 0.98rem;
             font-weight: 700;
             color: var(--ink);
             white-space: normal;
@@ -408,10 +386,6 @@
             </div>
         </div>
 
-        <div class="quote-banner">
-            <div class="quote-text">"בתחום של לקויות למידה, אין בערך, יש בדיוק!"</div>
-        </div>
-
         <div class="faq-banner">
             <div class="faq-icon">💬</div>
             <div class="faq-content">
@@ -440,14 +414,14 @@
                 <div class="c-icon">📍</div>
                 <div>
                     <div class="c-label">כתובת</div>
-                    <div class="c-value" style="font-size:0.82rem;">אוסקר שינדלר 40, תל אביב</div>
+                    <div class="c-value" style="font-size:0.9rem;">אוסקר שינדלר 40, תל אביב</div>
                 </div>
             </div>
             <div class="contact-item">
                 <div class="c-icon">✉️</div>
                 <div>
                     <div class="c-label">אימייל</div>
-                    <div class="c-value" dir="ltr" style="font-size:0.72rem; text-align: right;">hagarnegev@gmail.com</div>
+                    <div class="c-value" dir="ltr" style="font-size:0.8rem; text-align: right;">hagarnegev@gmail.com</div>
                 </div>
             </div>
         </div>
