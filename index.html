@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="rtl" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <meta http-equiv="Content-Language" content="he">
     <meta name="color-scheme" content="light only">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -760,6 +762,91 @@
                     osc.start(t0); osc.stop(t0 + dur + 0.05);
                 });
             }
+            /* --- הקראה: "מטופל" (בקול שלך) + המספר (בקול הדפדפן/מחשב) + "לחדר מספר 2" (בקול שלך) ---
+               הקלטות הפתיחה והסיום נמצאות בתיקייה queue-audio (start.wav / end.wav, או mp3/webm/ogg/m4a).
+               אם אין הקלטות - הכל מוקרא בקול הדפדפן. אם אין קול עברי - צליל דינג-דונג. */
+            var AUDIO_DIR = 'queue-audio/';
+            var AUDIO_EXTS = ['wav', 'mp3', 'webm', 'ogg', 'm4a'];
+            var ANNOUNCE_VOLUME = 1;      // 0.1 עד 1
+            var ANNOUNCE_REPEATS = 1;     // כמה פעמים לחזור על ההקראה
+            var ANNOUNCE_GAP_MS = 2500;   // רווח בין חזרות
+            var ANNOUNCE_ROOM = 2;
+            var SPEECH_LEAD_MS = 150;     // המספר מתחיל להישמע כך וכך מילישניות לפני שהמילה "מטופל" נגמרת (מקצר את ההפסקה)
+
+            // טוען קובץ שמע (מנסה את כל הסיומות) ומחזיר אותו מוכן לניגון - או כישלון אם אין כזה
+            function loadClip(name, extIdx, ok, fail) {
+                if (extIdx >= AUDIO_EXTS.length) { fail(); return; }
+                var done = false;
+                var a = new Audio();
+                a.preload = 'auto';
+                a.volume = ANNOUNCE_VOLUME;
+                a.oncanplaythrough = function () { if (!done) { done = true; ok(a); } };
+                a.onerror = function () { if (!done) { done = true; loadClip(name, extIdx + 1, ok, fail); } };
+                a.src = AUDIO_DIR + name + '.' + AUDIO_EXTS[extIdx];
+                a.load();
+            }
+
+            function pickHebrewVoice() {
+                var voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+                var best = null;
+                for (var i = 0; i < voices.length; i++) {
+                    if (/^(he|iw)/i.test(voices[i].lang)) {
+                        if (!best || /Natural|Online/i.test(voices[i].name)) best = voices[i]; // מעדיף קול טבעי
+                    }
+                }
+                return best;
+            }
+
+            // מקריא טקסט בקול הדפדפן. מחזיר false אם אין קול עברי. onEnded נקרא בסיום (עם הגנה אם האירוע לא מגיע).
+            function speak(text, onEnded) {
+                var voice = pickHebrewVoice();
+                if (!voice) return false;
+                var finished = false;
+                function finish() { if (!finished) { finished = true; onEnded(); } }
+                var u = new SpeechSynthesisUtterance(text);
+                u.voice = voice; u.lang = voice.lang; u.rate = 1; u.volume = ANNOUNCE_VOLUME;
+                u.onend = finish;
+                u.onerror = finish;
+                // גיבוי למקרה שהדפדפן לא שולח את אירוע הסיום (קורה בקולות רשת): זמן קצר, לפי אורך הטקסט
+                setTimeout(finish, 1500 + 150 * text.length);
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(u);
+                return true;
+            }
+
+            function announce(n) {
+                var left = ANNOUNCE_REPEATS;
+                function once() {
+                    var again = function () { left--; if (left > 0) setTimeout(once, ANNOUNCE_GAP_MS); };
+
+                    // א) פתיחה + סיום מוקלטים בקול שלך, והמספר באמצע בקול הדפדפן
+                    loadClip('start', 0, function (startClip) {
+                        loadClip('end', 0, function (endClip) {
+                            endClip.onended = again;
+                            var spoken = false;
+                            function speakNow() {
+                                if (spoken) return; spoken = true;
+                                var playEnd = function () { var p = endClip.play(); if (p && p.catch) p.catch(function () {}); };
+                                if (!speak(String(n), playEnd)) { dingDong(); setTimeout(playEnd, 1500); } // אין קול עברי למספר
+                            }
+                            startClip.onended = speakNow;
+                            var p = startClip.play();
+                            if (p && p.catch) p.catch(function () { /* חסום עד לחיצה ראשונה בדף */ });
+                            // מתחילים את המספר רגע לפני שהפתיחה נגמרת - קולות רשת צריכים עוד רגע להתחיל, וכך אין "חור" באמצע
+                            if (startClip.duration && isFinite(startClip.duration)) {
+                                setTimeout(speakNow, Math.max(0, startClip.duration * 1000 - SPEECH_LEAD_MS));
+                            }
+                        }, fallback);
+                    }, fallback);
+
+                    // ב) אין הקלטות - כל המשפט בקול הדפדפן, ואם אין קול עברי - דינג-דונג
+                    function fallback() {
+                        if (!speak('מטופל ' + n + ', לחדר מספר ' + ANNOUNCE_ROOM, again)) { dingDong(); again(); }
+                    }
+                }
+                once();
+            }
+
             function dingDong() {
                 var c = getAudio(); if (!c) return;
                 if (c.state === 'suspended') c.resume();
@@ -783,7 +870,7 @@
                     numberEl.style.animation = 'none';
                     void numberEl.offsetWidth;
                     numberEl.style.animation = '';
-                    dingDong();
+                    announce(res.number);
                 }
                 lastKey = key;
                 overlay.style.display = 'flex';
