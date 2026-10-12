@@ -356,6 +356,35 @@
             line-height: 1.25;
         }
         .contact-item > div:last-child { min-width: 0; overflow: visible; }
+
+        /* ===== קריאה לתור - נוירולוג: שכבה על כל המסך למשך 30 שניות ===== */
+        #queueOverlay {
+            display: none;
+            position: fixed;
+            top: 0; right: 0; bottom: 0; left: 0;
+            z-index: 2147483647;
+            background: var(--bg);
+            color: var(--ink);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: 'Assistant', 'Segoe UI', Tahoma, sans-serif;
+        }
+        #queueOverlay .q-logo { height: 9vh; width: 9vh; border-radius: 18px; object-fit: cover; margin-bottom: 1.5vh; }
+        #queueOverlay .q-clinic { font-size: 4.2vw; font-weight: 800; color: var(--teal); margin-bottom: 2vh; }
+        #queueOverlay .q-label { font-size: 5vw; font-weight: 600; color: var(--stone); margin-bottom: 2vh; }
+        #queueOverlay .q-number {
+            font-size: 22vw; font-weight: 800; line-height: 1.05; color: var(--teal);
+            background: var(--panel); border: 2px solid var(--hairline); border-radius: 40px;
+            padding: 1vh 6vw; min-width: 30vw;
+            animation: qPulse 1.2s ease;
+        }
+        @keyframes qPulse {
+            0% { transform: scale(0.9); opacity: 0.3; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -449,6 +478,14 @@
         </div>
 
     </div>
+    </div>
+
+    <!-- קריאה לתור - נוירולוג: מסך מלא עם מספר התור (מופיע 30 שניות ואז נעלם) -->
+    <div id="queueOverlay">
+        <img class="q-logo" src="https://hagarnegev.co.il/wp-content/uploads/2024/11/cropped-Favicon.png" alt="">
+        <div class="q-clinic">הגר נגב פלד</div>
+        <div class="q-label">מספר תור מוזמן/ת לחדר 5</div>
+        <div class="q-number" id="queueOverlayNumber"></div>
     </div>
 
     <script>
@@ -685,6 +722,52 @@
         setTimeout(fitToScreen, 800);  // ריצה נוספת אחרי שהפונט/תמונות נטענו במלואם
         setTimeout(fitToScreen, 2000); // ריצה שלישית ליתר ביטחון על מכשירים איטיים
         setInterval(fitToScreen, 5000); // בדיקה חוזרת קבועה - מתקנת כל פער שנוצר לאורך זמן
+    </script>
+    <script>
+        /* ===== קריאה לתור - נוירולוג =====
+           בודק כל 3 שניות אם קראו למטופל (מערכת התורים). כשכן - מחליף את כל המסך
+           במספר התור למשך 30 שניות, ואז חוזר אוטומטית למסך הקבלה הרגיל. */
+        (function () {
+            var QUEUE_URL = 'https://script.google.com/macros/s/AKfycbwqMw0PK-joAGxs8-Ms0gojFAATo5fF8op-lvUtNPJ3dWCC67IisOZhJBFggTjPTDuL/exec';
+            var overlay = document.getElementById('queueOverlay');
+            var numberEl = document.getElementById('queueOverlayNumber');
+            var hideTimer = null;
+            var lastKey = '';
+
+            function hide() { overlay.style.display = 'none'; lastKey = ''; }
+
+            function handle(res) {
+                if (!res || !res.number || !(res.remainingMs > 0)) { if (overlay.style.display !== 'none') hide(); return; }
+                var key = res.number + '|' + res.time;
+                numberEl.textContent = res.number;
+                if (key !== lastKey) { // קריאה חדשה (או אותו מספר שנקרא שוב) - אנימציה מחדש
+                    numberEl.style.animation = 'none';
+                    void numberEl.offsetWidth;
+                    numberEl.style.animation = '';
+                }
+                lastKey = key;
+                overlay.style.display = 'flex';
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(hide, res.remainingMs); // נעלם בדיוק כשחצי הדקה נגמרת
+            }
+
+            // JSONP - עובד בלי בעיות CORS, גם כשהדף נפתח כקובץ מקומי
+            function poll() {
+                var cb = 'queueCb' + Date.now();
+                var s = document.createElement('script');
+                function cleanup() {
+                    try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+                    if (s.parentNode) s.parentNode.removeChild(s);
+                }
+                window[cb] = function (res) { handle(res); cleanup(); };
+                s.onerror = cleanup;
+                s.src = QUEUE_URL + '?page=status&callback=' + cb + '&_=' + Date.now();
+                document.body.appendChild(s);
+            }
+
+            poll();
+            setInterval(poll, 3000);
+        })();
     </script>
 </body>
 </html>
