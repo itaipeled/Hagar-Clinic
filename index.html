@@ -736,16 +736,54 @@
             var hideTimer = null;
             var lastKey = '';
 
+            /* --- צליל "דינג-דונג" בכל קריאה חדשה --- */
+            var SOUND_VOLUME = 0.6; // עוצמה: 0.1 (שקט) עד 1 (חזק)
+            var audioCtx = null;
+            function getAudio() {
+                if (!audioCtx) {
+                    var AC = window.AudioContext || window.webkitAudioContext;
+                    if (AC) audioCtx = new AC();
+                }
+                return audioCtx;
+            }
+            function tone(freq, start, dur) {
+                var c = getAudio(); if (!c) return;
+                var t0 = c.currentTime + start;
+                [[1, 1], [2, 0.25]].forEach(function (p) { // צליל רך: יסוד + הרמוניה
+                    var osc = c.createOscillator(), g = c.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq * p[0];
+                    g.gain.setValueAtTime(0.0001, t0);
+                    g.gain.exponentialRampToValueAtTime(Math.max(0.5 * SOUND_VOLUME * p[1], 0.0002), t0 + 0.01);
+                    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+                    osc.connect(g); g.connect(c.destination);
+                    osc.start(t0); osc.stop(t0 + dur + 0.05);
+                });
+            }
+            function dingDong() {
+                var c = getAudio(); if (!c) return;
+                if (c.state === 'suspended') c.resume();
+                tone(784, 0, 1.0);    // דינג
+                tone(587, 0.45, 1.4); // דונג
+            }
+            // דפדפנים חוסמים צליל עד לחיצה אחת בדף (בדיוק כמו הרדיו) - לחיצה אחת פותחת את שניהם
+            function unlockAudio() {
+                var c = getAudio();
+                if (c && c.state === 'suspended') c.resume();
+            }
+            ['click', 'touchstart', 'keydown'].forEach(function (ev) { document.addEventListener(ev, unlockAudio); });
+
             function hide() { overlay.style.display = 'none'; lastKey = ''; }
 
             function handle(res) {
                 if (!res || !res.number || !(res.remainingMs > 0)) { if (overlay.style.display !== 'none') hide(); return; }
                 var key = res.number + '|' + res.time;
                 numberEl.textContent = res.number;
-                if (key !== lastKey) { // קריאה חדשה (או אותו מספר שנקרא שוב) - אנימציה מחדש
+                if (key !== lastKey) { // קריאה חדשה (או אותו מספר שנקרא שוב) - אנימציה וצליל
                     numberEl.style.animation = 'none';
                     void numberEl.offsetWidth;
                     numberEl.style.animation = '';
+                    dingDong();
                 }
                 lastKey = key;
                 overlay.style.display = 'flex';
