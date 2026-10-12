@@ -771,7 +771,7 @@
             var ANNOUNCE_REPEATS = 1;     // כמה פעמים לחזור על ההקראה
             var ANNOUNCE_GAP_MS = 2500;   // רווח בין חזרות
             var ANNOUNCE_ROOM = 2;
-            var SPEECH_LEAD_MS = 150;     // המספר מתחיל להישמע כך וכך מילישניות לפני שהמילה "מטופל" נגמרת (מקצר את ההפסקה)
+            var SPEECH_LEAD_MS = 70;      // ההפסקה בין "מטופל" למספר: מספר גדול = הפסקה קצרה יותר (150 = כמעט בלי הפסקה), 0 = הפסקה רגילה, מספר שלילי (למשל -200) = הפסקה ארוכה יותר
 
             // טוען קובץ שמע (מנסה את כל הסיומות) ומחזיר אותו מוכן לניגון - או כישלון אם אין כזה
             function loadClip(name, extIdx, ok, fail) {
@@ -829,11 +829,13 @@
                                 var playEnd = function () { var p = endClip.play(); if (p && p.catch) p.catch(function () {}); };
                                 if (!speak(String(n), playEnd)) { dingDong(); setTimeout(playEnd, 1500); } // אין קול עברי למספר
                             }
-                            startClip.onended = speakNow;
+                            // מספר חיובי: המספר מתחיל רגע לפני שהפתיחה נגמרת. אפס או שלילי: ממתינים אחרי סוף הפתיחה.
+                            startClip.onended = function () {
+                                if (SPEECH_LEAD_MS > 0) speakNow(); else setTimeout(speakNow, -SPEECH_LEAD_MS);
+                            };
                             var p = startClip.play();
                             if (p && p.catch) p.catch(function () { /* חסום עד לחיצה ראשונה בדף */ });
-                            // מתחילים את המספר רגע לפני שהפתיחה נגמרת - קולות רשת צריכים עוד רגע להתחיל, וכך אין "חור" באמצע
-                            if (startClip.duration && isFinite(startClip.duration)) {
+                            if (SPEECH_LEAD_MS > 0 && startClip.duration && isFinite(startClip.duration)) {
                                 setTimeout(speakNow, Math.max(0, startClip.duration * 1000 - SPEECH_LEAD_MS));
                             }
                         }, fallback);
