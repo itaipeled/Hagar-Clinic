@@ -769,7 +769,7 @@
             var BOOST_ENABLED = true;   // false = בלי הגברה (עוצמה רגילה)
             var CHIME_GAIN = 2.2;       // דינג-דונג
             var START_GAIN = 1.8;       // "מטופל"
-            var END_GAIN = 2.5;         // "לחדר מספר 2" (חזק יותר, כי הוא נשמע שקט יחסית ל"מטופל")
+            var END_GAIN = 3.4;         // "לחדר מספר 2" (חזק יותר, כי הוא נשמע שקט יחסית ל"מטופל")
             var masterNode = null;
             function getMaster() {
                 var c = getAudio(); if (!c) return null;
@@ -823,7 +823,7 @@
             AUDIO_DIRS.forEach(function (d) { AUDIO_EXTS.forEach(function (x) { AUDIO_PATHS.push({ dir: d, ext: x }); }); });
             var ANNOUNCE_VOLUME = 1;      // 0.1 עד 1
             var ANNOUNCE_REPEATS = 2;     // כמה פעמים ההקראה נשמעת
-            var LAST_READ_BEFORE_END_MS = 9000; // ההקראה האחרונה מתחילה כך וכך מילישניות לפני שהמספר נעלם מהמסך (ההקראה נמשכת כ-5 שניות)
+            var GAP_BETWEEN_READS_MS = 5000;   // ההפסקה בין סוף ההקראה הראשונה לתחילת השנייה (5000 = חמש שניות)
             var CHIME_BEFORE = true;      // צליל דינג-דונג לפני ההקראה
             var CHIME_LEAD_MS = 1500;     // כמה זמן אחרי תחילת הדינג-דונג מתחילה ההקראה (אורך הדינג-דונג כ-1.8 שניות)
             var ANNOUNCE_ROOM = 2;
@@ -878,10 +878,14 @@
             }
 
             // קריאה אחת מלאה: "מטופל" + המספר + "לחדר מספר 2"
-            function readOnce(n) {
+            function readOnce(n, onDone) {
+                var doneCalled = false;
+                function done() { if (!doneCalled) { doneCalled = true; onDone(); } }
+                announceTimers.push(setTimeout(done, 12000)); // גיבוי: אם משהו נתקע, ממשיכים בכל זאת
                 // א) פתיחה + סיום מוקלטים בקול שלך, והמספר באמצע בקול הדפדפן
                 loadClip('start', 0, function (startClip) {
                     loadClip('end', 0, function (endClip) {
+                        endClip.onended = done;
                         var v = pickHebrewVoice();
                         setStatus('✓ נטענו ההקלטות (start + end) · מצב שמע: ' + (audioCtx ? audioCtx.state : 'לא פעיל') + ' · המספר ' + (v ? 'מוקרא בקול: ' + v.name : 'ללא קול עברי במחשב - יושמע דינג-דונג במקומו'));
                         var spoken = false;
@@ -907,24 +911,23 @@
                     var v = pickHebrewVoice();
                     setStatus('✗ לא נמצאו הקבצים start.wav ו-end.wav ליד ה-index.html (ולא בתיקייה queue-audio) · ' +
                         (v ? 'מקריא הכל בקול המחשב: ' + v.name : 'אין קול עברי - יושמע דינג-דונג'));
-                    if (!speak('מטופל ' + n + ', לחדר מספר ' + ANNOUNCE_ROOM, function () {})) dingDong();
+                    if (!speak('מטופל ' + n + ', לחדר מספר ' + ANNOUNCE_ROOM, done)) { dingDong(); done(); }
                 }
             }
 
-            // לוח הזמנים של הקריאה: דינג-דונג ← הקראה ראשונה ← ... ← הקראה אחרונה סמוך לסוף זמן ההצגה על המסך
+            // לוח הזמנים: דינג-דונג ← הקראה ראשונה ← הפסקה קצרה ← הקראה שנייה
             var announceTimers = [];
             function cancelAnnouncements() { announceTimers.forEach(clearTimeout); announceTimers = []; }
-            function announce(n, remainingMs) {
+            function announce(n) {
                 cancelAnnouncements();
-                var firstAt = CHIME_BEFORE ? CHIME_LEAD_MS : 0;
-                var total = remainingMs > 0 ? remainingMs : 30000;
-                // ההקראה האחרונה מתחילה LAST_READ_BEFORE_END_MS לפני סוף התצוגה (ולא לפני 4 שניות אחרי הראשונה)
-                var lastAt = Math.max(firstAt + 4000, total - LAST_READ_BEFORE_END_MS);
-                if (CHIME_BEFORE) dingDong();
-                for (var i = 0; i < ANNOUNCE_REPEATS; i++) {
-                    var at = ANNOUNCE_REPEATS === 1 ? firstAt : firstAt + i * (lastAt - firstAt) / (ANNOUNCE_REPEATS - 1);
-                    announceTimers.push(setTimeout(function () { readOnce(n); }, at));
+                var left = ANNOUNCE_REPEATS;
+                function go() {
+                    readOnce(n, function () {
+                        left--;
+                        if (left > 0) announceTimers.push(setTimeout(go, GAP_BETWEEN_READS_MS));
+                    });
                 }
+                if (CHIME_BEFORE) { dingDong(); announceTimers.push(setTimeout(go, CHIME_LEAD_MS)); } else { go(); }
             }
 
             function dingDong() {
@@ -957,7 +960,7 @@
                     numberEl.style.animation = 'none';
                     void numberEl.offsetWidth;
                     numberEl.style.animation = '';
-                    announce(res.number, res.remainingMs);
+                    announce(res.number);
                 }
                 lastKey = key;
                 overlay.style.display = 'flex';
