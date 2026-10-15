@@ -763,9 +763,45 @@
                 }
                 return audioCtx;
             }
+
+            /* --- הגברה: כל הצלילים (דינג-דונג וההקלטות) עוברים דרך מגביר + מגביל, כך שאפשר להגביר
+                   הרבה מעבר לעוצמה הרגילה בלי עיוות. מספר גדול = חזק יותר. --- */
+            var BOOST_ENABLED = true;   // false = בלי הגברה (עוצמה רגילה)
+            var CHIME_GAIN = 2.2;       // דינג-דונג
+            var START_GAIN = 1.8;       // "מטופל"
+            var END_GAIN = 2.5;         // "לחדר מספר 2" (חזק יותר, כי הוא נשמע שקט יחסית ל"מטופל")
+            var masterNode = null;
+            function getMaster() {
+                var c = getAudio(); if (!c) return null;
+                if (!masterNode) {
+                    var comp = c.createDynamicsCompressor(); // מגביל: מונע עיוות כשמגבירים חזק
+                    comp.threshold.value = -6; comp.knee.value = 2; comp.ratio.value = 20;
+                    comp.attack.value = 0.003; comp.release.value = 0.15;
+                    comp.connect(c.destination);
+                    masterNode = comp;
+                }
+                return masterNode;
+            }
+            // מחבר קובץ שמע לשרשרת ההגברה. אם משהו נכשל - ממשיכים בלי הגברה (עוצמה רגילה).
+            function boostClip(a, name) {
+                if (!BOOST_ENABLED) return;
+                try {
+                    var c = getAudio(), m = getMaster(); if (!c || !m) return;
+                    var src = c.createMediaElementSource(a);
+                    var g = c.createGain(); g.gain.value = name === 'end' ? END_GAIN : START_GAIN;
+                    src.connect(g); g.connect(m);
+                } catch (e) { /* בלי הגברה */ }
+            }
+
             function tone(freq, start, dur) {
                 var c = getAudio(); if (!c) return;
                 var t0 = c.currentTime + start;
+                var out = c.destination;
+                if (BOOST_ENABLED) {
+                    var cg = c.createGain(); cg.gain.value = CHIME_GAIN;
+                    cg.connect(getMaster() || c.destination);
+                    out = cg;
+                }
                 [[1, 1], [2, 0.25]].forEach(function (p) { // צליל רך: יסוד + הרמוניה
                     var osc = c.createOscillator(), g = c.createGain();
                     osc.type = 'sine';
@@ -773,7 +809,7 @@
                     g.gain.setValueAtTime(0.0001, t0);
                     g.gain.exponentialRampToValueAtTime(Math.max(0.6 * SOUND_VOLUME * p[1], 0.0002), t0 + 0.01);
                     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-                    osc.connect(g); g.connect(c.destination);
+                    osc.connect(g); g.connect(out);
                     osc.start(t0); osc.stop(t0 + dur + 0.05);
                 });
             }
@@ -800,7 +836,7 @@
                 var a = new Audio();
                 a.preload = 'auto';
                 a.volume = ANNOUNCE_VOLUME;
-                a.oncanplaythrough = function () { if (!done) { done = true; ok(a); } };
+                a.oncanplaythrough = function () { if (!done) { done = true; boostClip(a, name); ok(a); } };
                 a.onerror = function () { if (!done) { done = true; loadClip(name, idx + 1, ok, fail); } };
                 a.src = AUDIO_PATHS[idx].dir + name + '.' + AUDIO_PATHS[idx].ext;
                 a.load();
@@ -854,7 +890,7 @@
                     loadClip('start', 0, function (startClip) {
                         loadClip('end', 0, function (endClip) {
                             var v = pickHebrewVoice();
-                            setStatus('✓ נטענו ההקלטות (start + end) · המספר ' + (v ? 'מוקרא בקול: ' + v.name : 'ללא קול עברי במחשב - יושמע דינג-דונג במקומו'));
+                            setStatus('✓ נטענו ההקלטות (start + end) · מצב שמע: ' + (audioCtx ? audioCtx.state : 'לא פעיל') + ' · המספר ' + (v ? 'מוקרא בקול: ' + v.name : 'ללא קול עברי במחשב - יושמע דינג-דונג במקומו'));
                             endClip.onended = again;
                             var spoken = false;
                             function speakNow() {
