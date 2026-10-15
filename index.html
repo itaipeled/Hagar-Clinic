@@ -737,13 +737,21 @@
             var overlay = document.getElementById('queueOverlay');
             var numberEl = document.getElementById('queueOverlayNumber');
             var hideTimer = null;
-            var lastKey = '';
 
             /* --- מוזיקת הרדיו של השילוט: משתתקת בזמן הקריאה וחוזרת לעצמה כשהקריאה נגמרת --- */
             var radio = document.getElementById('bgMusic');
-            var savedRadioVolume = null;
-            function duckRadio() { if (radio && savedRadioVolume === null) { savedRadioVolume = radio.volume; radio.volume = 0; } }
-            function restoreRadio() { if (radio && savedRadioVolume !== null) { radio.volume = savedRadioVolume; savedRadioVolume = null; } }
+            var savedRadioVolume = null, savedRadioMuted = false, radioGuard = null;
+            function duckRadio() {
+                if (!radio) return;
+                if (savedRadioVolume === null) { savedRadioVolume = radio.volume; savedRadioMuted = radio.muted; }
+                radio.volume = 0; radio.muted = true;
+                // שומר: אם משהו (למשל חיבור מחדש של הרדיו) מחזיר את הקול באמצע הקריאה - משתיק שוב
+                if (!radioGuard) radioGuard = setInterval(function () { if (!radio.muted || radio.volume > 0) { radio.volume = 0; radio.muted = true; } }, 400);
+            }
+            function restoreRadio() {
+                if (radioGuard) { clearInterval(radioGuard); radioGuard = null; }
+                if (radio && savedRadioVolume !== null) { radio.volume = savedRadioVolume; radio.muted = savedRadioMuted; savedRadioVolume = null; }
+            }
 
             /* --- מצב בדיקה: מקש T מציג קריאה לדוגמה (מספר 200) ושורת סטטוס שמראה מה הושמע ולמה --- */
             var testMode = false;
@@ -823,7 +831,7 @@
             AUDIO_DIRS.forEach(function (d) { AUDIO_EXTS.forEach(function (x) { AUDIO_PATHS.push({ dir: d, ext: x }); }); });
             var ANNOUNCE_VOLUME = 1;      // 0.1 עד 1
             var ANNOUNCE_REPEATS = 2;     // כמה פעמים ההקראה נשמעת
-            var GAP_BETWEEN_READS_MS = 3000;   // ההפסקה בין סוף ההקראה הראשונה לתחילת השנייה (3000 = חמש שניות)
+            var GAP_BETWEEN_READS_MS = 5000;   // ההפסקה בין סוף ההקראה הראשונה לתחילת השנייה (5000 = חמש שניות)
             var CHIME_BEFORE = true;      // צליל דינג-דונג לפני ההקראה
             var CHIME_LEAD_MS = 1500;     // כמה זמן אחרי תחילת הדינג-דונג מתחילה ההקראה (אורך הדינג-דונג כ-1.8 שניות)
             var ANNOUNCE_ROOM = 2;
@@ -944,54 +952,119 @@
             ['click', 'touchstart', 'keydown'].forEach(function (ev) { document.addEventListener(ev, unlockAudio); });
 
             function hide() {
-                overlay.style.display = 'none'; lastKey = '';
+                overlay.style.display = 'none';
                 cancelAnnouncements();                            // קריאות שלא הספיקו להתחיל מתבטלות
                 restoreRadio();                                   // המוזיקה חוזרת
                 if (statusEl) statusEl.style.display = 'none';
                 testMode = false;
             }
 
-            function handle(res) {
-                if (!res || !res.number || !(res.remainingMs > 0)) { if (overlay.style.display !== 'none') hide(); return; }
-                var key = res.number + '|' + res.time;
-                duckRadio();                                      // המוזיקה משתתקת בזמן הקריאה
-                numberEl.textContent = res.number;
-                if (key !== lastKey) { // קריאה חדשה (או אותו מספר שנקרא שוב) - אנימציה וצליל
-                    numberEl.style.animation = 'none';
-                    void numberEl.offsetWidth;
-                    numberEl.style.animation = '';
-                    announce(res.number);
-                }
-                lastKey = key;
-                overlay.style.display = 'flex';
-                clearTimeout(hideTimer);
-                hideTimer = setTimeout(hide, res.remainingMs); // נעלם בדיוק כשחצי הדקה נגמרת
+            /* ---------- הצגת קריאה ---------- */
+            var lastHandledId = '', lastHandledTime = 0;
+
+            function ack(id) { // מודיע לשרת שהקריאה הוצגה בפועל - הרופא רואה "הקריאה הופיעה על המסך"
+                if (!id) return;
+                try { new Image().src = QUEUE_URL + '?page=ack&id=' + encodeURIComponent(id) + '&_=' + Date.now(); } catch (e) {}
             }
 
-            // JSONP - עובד בלי בעיות CORS, גם כשהדף נפתח כקובץ מקומי
+            function showCall(res) {
+                clearTimeout(hideTimer);
+                duckRadio();                                      // המוזיקה משתתקת בזמן הקריאה
+                numberEl.textContent = res.number;
+                numberEl.style.animation = 'none';
+                void numberEl.offsetWidth;
+                numberEl.style.animation = '';
+                overlay.style.display = 'flex';
+                hideTimer = setTimeout(hide, res.remainingMs);    // נעלם בדיוק כשחצי הדקה נגמרת (לפי השרת)
+                announce(res.number);                             // מבטל קריאות קודמות שעוד לא הסתיימו
+                ack(res.id);
+            }
+
+            // כל תשובה מהשרת עוברת כאן. כללי הבטיחות:
+            //  1. תשובה ריקה לעולם לא מסתירה את המסך - ההסתרה נעשית רק לפי הטיימר המקומי.
+            //  2. קריאה שכבר הוצגה (לפי המזהה שלה) לעולם לא מוצגת ולא מוקראת שוב, גם אם תשובה
+            //     מאוחרת/כפולה מגיעה אחרי שהמסך כבר חזר לשילוט.
+            function handle(res) {
+                if (!res || !res.number || !(res.remainingMs > 0)) return;
+                var id = res.id || (res.number + '|' + res.time);
+                var t = Number(res.time) || 0;
+                if (id === lastHandledId) return;
+                if (t && t < lastHandledTime) return;             // תשובה ישנה יותר ממה שכבר הוצג
+                lastHandledId = id;
+                if (t) lastHandledTime = t;
+                showCall(res);
+            }
+
+            /* ---------- בדיקת השרת: JSONP, תשובה אחת בכל פעם, עם הגנה מתשובות ישנות ---------- */
+            var POLL_MS_DAY = 2000;       // בשעות הפעילות: בדיקה כל 2 שניות (המספר מופיע תוך כשניים-שלוש שניות מהלחיצה)
+            var POLL_MS_NIGHT = 15000;    // בלילה: לא צריך לבדוק כל כך מהר (וחוסך עומס על השרת)
+            var DAY_FROM_HOUR = 7, DAY_TO_HOUR = 21;
+            var POLL_TIMEOUT_MS = 8000;   // אם השרת לא ענה תוך 8 שניות - מוותרים על הבדיקה הזו וממשיכים לבאה
+            var HEARTBEAT_EVERY_MS = 20000;
+            var pollSeq = 0, appliedSeq = 0, lastHeartbeat = 0;
+            var lastResponseAt = Date.now(), pageLoadedAt = Date.now();
+
+            function nextPollDelay() {
+                var hr = new Date().getHours();
+                return (hr >= DAY_FROM_HOUR && hr < DAY_TO_HOUR) ? POLL_MS_DAY : POLL_MS_NIGHT;
+            }
+
             function poll() {
-                var cb = 'queueCb' + Date.now();
+                var seq = ++pollSeq;
+                var cb = 'queueCb' + seq;
                 var s = document.createElement('script');
-                function cleanup() {
-                    try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+                var finished = false, timer = null;
+
+                function finish() {
+                    if (finished) return;
+                    finished = true;
+                    clearTimeout(timer);
                     if (s.parentNode) s.parentNode.removeChild(s);
+                    setTimeout(poll, nextPollDelay());            // הבדיקה הבאה רק אחרי שהנוכחית הסתיימה - אין בדיקות חופפות
                 }
-                window[cb] = function (res) { handle(res); cleanup(); };
-                s.onerror = cleanup;
-                s.src = QUEUE_URL + '?page=status&callback=' + cb + '&_=' + Date.now();
+
+                // תשובה שמגיעה אחרי שוויתרנו (או ישנה יותר ממה שכבר טופל) נזרקת בלי לגעת במסך
+                window[cb] = function (res) {
+                    lastResponseAt = Date.now();                  // השרת ענה - הכל חי
+                    if (!finished && seq > appliedSeq) { appliedSeq = seq; handle(res); }
+                    finish();
+                };
+                s.onerror = finish;
+                timer = setTimeout(finish, POLL_TIMEOUT_MS);
+
+                var url = QUEUE_URL + '?page=status&callback=' + cb + '&_=' + Date.now();
+                if (Date.now() - lastHeartbeat > HEARTBEAT_EVERY_MS) { url += '&hb=1'; lastHeartbeat = Date.now(); } // "דופק": הרופא רואה שהשילוט מחובר
+                s.src = url;
                 document.body.appendChild(s);
             }
+
+            /* ---------- שומר ("כלב שמירה"): מרענן את הדף אם הוא נתקע, ופעם ביום בלילה ----------
+               לעולם לא מרענן באמצע קריאה, ולא כשאין אינטרנט (כדי שלא יישאר דף שגיאה של הדפדפן). */
+            var STALL_RELOAD_MS = 5 * 60 * 1000;   // בלי שום תשובה מהשרת 5 דקות -> רענון
+            var DAILY_RELOAD_HOUR = 4;             // רענון יומי בשעה 4 בלילה
+            function reloadIfReachable() {
+                if (navigator.onLine === false) return;
+                fetch(location.href, { method: 'HEAD', cache: 'no-store' })
+                    .then(function (r) { if (r.ok) location.reload(); })
+                    .catch(function () { /* אין חיבור - ננסה שוב בבדיקה הבאה */ });
+            }
+            function watchdog() {
+                if (overlay.style.display !== 'none') return;
+                var stalled = Date.now() - lastResponseAt > STALL_RELOAD_MS;
+                var dailyDue = new Date().getHours() === DAILY_RELOAD_HOUR && Date.now() - pageLoadedAt > 3600 * 1000;
+                if (stalled || dailyDue) reloadIfReachable();
+            }
+            setInterval(watchdog, 60 * 1000);
 
             // מקש T = קריאה לדוגמה (מספר 200) עם שורת סטטוס - לבדיקה בלי לחכות לקריאה אמיתית
             document.addEventListener('keydown', function (e) {
                 if (e.code === 'KeyT') {
                     testMode = true;
-                    handle({ number: '200', time: String(Date.now()), remainingMs: 30000 });
+                    showCall({ number: '200', id: '', remainingMs: 30000 });
                 }
             });
 
             poll();
-            setInterval(poll, 3000);
         })();
     </script>
 </body>
