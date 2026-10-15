@@ -490,6 +490,7 @@
         <div class="q-calling">מזמנים את הלקוח הבא</div>
         <div class="q-label">מספר תור מוזמן/ת לחדר 2</div>
         <div class="q-number" id="queueOverlayNumber"></div>
+        <div id="queueStatus" style="display:none; position:absolute; bottom:1.2vh; left:0; right:0; padding:0 2vw; font-size:1.3vw; color:#8a8175;"></div>
     </div>
 
     <script>
@@ -738,6 +739,20 @@
             var hideTimer = null;
             var lastKey = '';
 
+            /* --- מוזיקת הרדיו של השילוט: משתתקת בזמן הקריאה וחוזרת לעצמה כשהקריאה נגמרת --- */
+            var radio = document.getElementById('bgMusic');
+            var savedRadioVolume = null;
+            function duckRadio() { if (radio && savedRadioVolume === null) { savedRadioVolume = radio.volume; radio.volume = 0; } }
+            function restoreRadio() { if (radio && savedRadioVolume !== null) { radio.volume = savedRadioVolume; savedRadioVolume = null; } }
+
+            /* --- מצב בדיקה: מקש T מציג קריאה לדוגמה (מספר 200) ושורת סטטוס שמראה מה הושמע ולמה --- */
+            var testMode = false;
+            var statusEl = document.getElementById('queueStatus');
+            function setStatus(t) { if (testMode && statusEl) { statusEl.textContent = t; statusEl.style.display = 'block'; } }
+
+            // מכינים את רשימת הקולות מראש - בדפדפנים רבים היא נטענת רק אחרי הקריאה הראשונה אליה
+            if (window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = function () {}; }
+
             /* --- צליל "דינג-דונג" בכל קריאה חדשה --- */
             var SOUND_VOLUME = 0.6; // עוצמה: 0.1 (שקט) עד 1 (חזק)
             var audioCtx = null;
@@ -763,10 +778,13 @@
                 });
             }
             /* --- הקראה: "מטופל" (בקול שלך) + המספר (בקול הדפדפן/מחשב) + "לחדר מספר 2" (בקול שלך) ---
-               הקלטות הפתיחה והסיום נמצאות בתיקייה queue-audio (start.wav / end.wav, או mp3/webm/ogg/m4a).
+               הקלטות הפתיחה והסיום: start.wav ו-end.wav, באותה תיקייה של index.html (או בתיקייה queue-audio).
                אם אין הקלטות - הכל מוקרא בקול הדפדפן. אם אין קול עברי - צליל דינג-דונג. */
-            var AUDIO_DIR = 'queue-audio/';
+            // מחפש את ההקלטות קודם באותה תיקייה שבה נמצא index.html, ואם אין - בתיקייה queue-audio
+            var AUDIO_DIRS = ['', 'queue-audio/'];
             var AUDIO_EXTS = ['wav', 'mp3', 'webm', 'ogg', 'm4a'];
+            var AUDIO_PATHS = [];
+            AUDIO_DIRS.forEach(function (d) { AUDIO_EXTS.forEach(function (x) { AUDIO_PATHS.push({ dir: d, ext: x }); }); });
             var ANNOUNCE_VOLUME = 1;      // 0.1 עד 1
             var ANNOUNCE_REPEATS = 1;     // כמה פעמים לחזור על ההקראה
             var ANNOUNCE_GAP_MS = 2500;   // רווח בין חזרות
@@ -774,15 +792,15 @@
             var SPEECH_LEAD_MS = 70;      // ההפסקה בין "מטופל" למספר: מספר גדול = הפסקה קצרה יותר (150 = כמעט בלי הפסקה), 0 = הפסקה רגילה, מספר שלילי (למשל -200) = הפסקה ארוכה יותר
 
             // טוען קובץ שמע (מנסה את כל הסיומות) ומחזיר אותו מוכן לניגון - או כישלון אם אין כזה
-            function loadClip(name, extIdx, ok, fail) {
-                if (extIdx >= AUDIO_EXTS.length) { fail(); return; }
+            function loadClip(name, idx, ok, fail) {
+                if (idx >= AUDIO_PATHS.length) { fail(); return; }
                 var done = false;
                 var a = new Audio();
                 a.preload = 'auto';
                 a.volume = ANNOUNCE_VOLUME;
                 a.oncanplaythrough = function () { if (!done) { done = true; ok(a); } };
-                a.onerror = function () { if (!done) { done = true; loadClip(name, extIdx + 1, ok, fail); } };
-                a.src = AUDIO_DIR + name + '.' + AUDIO_EXTS[extIdx];
+                a.onerror = function () { if (!done) { done = true; loadClip(name, idx + 1, ok, fail); } };
+                a.src = AUDIO_PATHS[idx].dir + name + '.' + AUDIO_PATHS[idx].ext;
                 a.load();
             }
 
@@ -798,9 +816,16 @@
             }
 
             // מקריא טקסט בקול הדפדפן. מחזיר false אם אין קול עברי. onEnded נקרא בסיום (עם הגנה אם האירוע לא מגיע).
-            function speak(text, onEnded) {
+            function speak(text, onEnded, noRetry) {
                 var voice = pickHebrewVoice();
-                if (!voice) return false;
+                if (!voice) {
+                    // רשימת הקולות עדיין נטענת (ריקה לגמרי) - מנסים שוב עוד רגע לפני שמוותרים
+                    if (!noRetry && window.speechSynthesis && window.speechSynthesis.getVoices().length === 0) {
+                        setTimeout(function () { if (!speak(text, onEnded, true)) { dingDong(); setTimeout(onEnded, 1200); } }, 800);
+                        return true;
+                    }
+                    return false;
+                }
                 var finished = false;
                 function finish() { if (!finished) { finished = true; onEnded(); } }
                 var u = new SpeechSynthesisUtterance(text);
@@ -822,6 +847,8 @@
                     // א) פתיחה + סיום מוקלטים בקול שלך, והמספר באמצע בקול הדפדפן
                     loadClip('start', 0, function (startClip) {
                         loadClip('end', 0, function (endClip) {
+                            var v = pickHebrewVoice();
+                            setStatus('✓ נטענו ההקלטות (start + end) · המספר ' + (v ? 'מוקרא בקול: ' + v.name : 'ללא קול עברי במחשב - יושמע דינג-דונג במקומו'));
                             endClip.onended = again;
                             var spoken = false;
                             function speakNow() {
@@ -834,7 +861,7 @@
                                 if (SPEECH_LEAD_MS > 0) speakNow(); else setTimeout(speakNow, -SPEECH_LEAD_MS);
                             };
                             var p = startClip.play();
-                            if (p && p.catch) p.catch(function () { /* חסום עד לחיצה ראשונה בדף */ });
+                            if (p && p.catch) p.catch(function () { setStatus('✗ הדפדפן חסם השמעה - צריך ללחוץ פעם אחת בכל מקום בדף'); });
                             if (SPEECH_LEAD_MS > 0 && startClip.duration && isFinite(startClip.duration)) {
                                 setTimeout(speakNow, Math.max(0, startClip.duration * 1000 - SPEECH_LEAD_MS));
                             }
@@ -843,6 +870,9 @@
 
                     // ב) אין הקלטות - כל המשפט בקול הדפדפן, ואם אין קול עברי - דינג-דונג
                     function fallback() {
+                        var v = pickHebrewVoice();
+                        setStatus('✗ לא נמצאו הקבצים start.wav ו-end.wav ליד ה-index.html (ולא בתיקייה queue-audio) · ' +
+                            (v ? 'מקריא הכל בקול המחשב: ' + v.name : 'אין קול עברי - יושמע דינג-דונג'));
                         if (!speak('מטופל ' + n + ', לחדר מספר ' + ANNOUNCE_ROOM, again)) { dingDong(); again(); }
                     }
                 }
@@ -862,11 +892,17 @@
             }
             ['click', 'touchstart', 'keydown'].forEach(function (ev) { document.addEventListener(ev, unlockAudio); });
 
-            function hide() { overlay.style.display = 'none'; lastKey = ''; }
+            function hide() {
+                overlay.style.display = 'none'; lastKey = '';
+                restoreRadio();                                   // המוזיקה חוזרת
+                if (statusEl) statusEl.style.display = 'none';
+                testMode = false;
+            }
 
             function handle(res) {
                 if (!res || !res.number || !(res.remainingMs > 0)) { if (overlay.style.display !== 'none') hide(); return; }
                 var key = res.number + '|' + res.time;
+                duckRadio();                                      // המוזיקה משתתקת בזמן הקריאה
                 numberEl.textContent = res.number;
                 if (key !== lastKey) { // קריאה חדשה (או אותו מספר שנקרא שוב) - אנימציה וצליל
                     numberEl.style.animation = 'none';
@@ -893,6 +929,14 @@
                 s.src = QUEUE_URL + '?page=status&callback=' + cb + '&_=' + Date.now();
                 document.body.appendChild(s);
             }
+
+            // מקש T = קריאה לדוגמה (מספר 200) עם שורת סטטוס - לבדיקה בלי לחכות לקריאה אמיתית
+            document.addEventListener('keydown', function (e) {
+                if (e.code === 'KeyT') {
+                    testMode = true;
+                    handle({ number: '200', time: String(Date.now()), remainingMs: 30000 });
+                }
+            });
 
             poll();
             setInterval(poll, 3000);
