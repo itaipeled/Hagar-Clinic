@@ -822,8 +822,8 @@
             var AUDIO_PATHS = [];
             AUDIO_DIRS.forEach(function (d) { AUDIO_EXTS.forEach(function (x) { AUDIO_PATHS.push({ dir: d, ext: x }); }); });
             var ANNOUNCE_VOLUME = 1;      // 0.1 עד 1
-            var ANNOUNCE_REPEATS = 2;     // כמה פעמים ההקראה נשמעת (פעמיים, עם הפסקה קטנה ביניהן)
-            var ANNOUNCE_GAP_MS = 2000;   // ההפסקה בין ההקראות
+            var ANNOUNCE_REPEATS = 2;     // כמה פעמים ההקראה נשמעת
+            var LAST_READ_BEFORE_END_MS = 9000; // ההקראה האחרונה מתחילה כך וכך מילישניות לפני שהמספר נעלם מהמסך (ההקראה נמשכת כ-5 שניות)
             var CHIME_BEFORE = true;      // צליל דינג-דונג לפני ההקראה
             var CHIME_LEAD_MS = 1500;     // כמה זמן אחרי תחילת הדינג-דונג מתחילה ההקראה (אורך הדינג-דונג כ-1.8 שניות)
             var ANNOUNCE_ROOM = 2;
@@ -877,48 +877,54 @@
                 return true;
             }
 
-            function announce(n) {
-                var left = ANNOUNCE_REPEATS;
-                var first = true;
-                function once() {
-                    // בפעם הראשונה: קודם דינג-דונג, ואחריו ההקראה
-                    if (first && CHIME_BEFORE) { first = false; dingDong(); setTimeout(once, CHIME_LEAD_MS); return; }
-                    first = false;
-                    var again = function () { left--; if (left > 0) setTimeout(once, ANNOUNCE_GAP_MS); };
-
-                    // א) פתיחה + סיום מוקלטים בקול שלך, והמספר באמצע בקול הדפדפן
-                    loadClip('start', 0, function (startClip) {
-                        loadClip('end', 0, function (endClip) {
-                            var v = pickHebrewVoice();
-                            setStatus('✓ נטענו ההקלטות (start + end) · מצב שמע: ' + (audioCtx ? audioCtx.state : 'לא פעיל') + ' · המספר ' + (v ? 'מוקרא בקול: ' + v.name : 'ללא קול עברי במחשב - יושמע דינג-דונג במקומו'));
-                            endClip.onended = again;
-                            var spoken = false;
-                            function speakNow() {
-                                if (spoken) return; spoken = true;
-                                var playEnd = function () { var p = endClip.play(); if (p && p.catch) p.catch(function () {}); };
-                                if (!speak(String(n), playEnd)) { dingDong(); setTimeout(playEnd, 1500); } // אין קול עברי למספר
-                            }
-                            // מספר חיובי: המספר מתחיל רגע לפני שהפתיחה נגמרת. אפס או שלילי: ממתינים אחרי סוף הפתיחה.
-                            startClip.onended = function () {
-                                if (SPEECH_LEAD_MS > 0) speakNow(); else setTimeout(speakNow, -SPEECH_LEAD_MS);
-                            };
-                            var p = startClip.play();
-                            if (p && p.catch) p.catch(function () { setStatus('✗ הדפדפן חסם השמעה - צריך ללחוץ פעם אחת בכל מקום בדף'); });
-                            if (SPEECH_LEAD_MS > 0 && startClip.duration && isFinite(startClip.duration)) {
-                                setTimeout(speakNow, Math.max(0, startClip.duration * 1000 - SPEECH_LEAD_MS));
-                            }
-                        }, fallback);
-                    }, fallback);
-
-                    // ב) אין הקלטות - כל המשפט בקול הדפדפן, ואם אין קול עברי - דינג-דונג
-                    function fallback() {
+            // קריאה אחת מלאה: "מטופל" + המספר + "לחדר מספר 2"
+            function readOnce(n) {
+                // א) פתיחה + סיום מוקלטים בקול שלך, והמספר באמצע בקול הדפדפן
+                loadClip('start', 0, function (startClip) {
+                    loadClip('end', 0, function (endClip) {
                         var v = pickHebrewVoice();
-                        setStatus('✗ לא נמצאו הקבצים start.wav ו-end.wav ליד ה-index.html (ולא בתיקייה queue-audio) · ' +
-                            (v ? 'מקריא הכל בקול המחשב: ' + v.name : 'אין קול עברי - יושמע דינג-דונג'));
-                        if (!speak('מטופל ' + n + ', לחדר מספר ' + ANNOUNCE_ROOM, again)) { dingDong(); again(); }
-                    }
+                        setStatus('✓ נטענו ההקלטות (start + end) · מצב שמע: ' + (audioCtx ? audioCtx.state : 'לא פעיל') + ' · המספר ' + (v ? 'מוקרא בקול: ' + v.name : 'ללא קול עברי במחשב - יושמע דינג-דונג במקומו'));
+                        var spoken = false;
+                        function speakNow() {
+                            if (spoken) return; spoken = true;
+                            var playEnd = function () { var p = endClip.play(); if (p && p.catch) p.catch(function () {}); };
+                            if (!speak(String(n), playEnd)) { dingDong(); setTimeout(playEnd, 1500); } // אין קול עברי למספר
+                        }
+                        // מספר חיובי: המספר מתחיל רגע לפני שהפתיחה נגמרת. אפס או שלילי: ממתינים אחרי סוף הפתיחה.
+                        startClip.onended = function () {
+                            if (SPEECH_LEAD_MS > 0) speakNow(); else setTimeout(speakNow, -SPEECH_LEAD_MS);
+                        };
+                        var p = startClip.play();
+                        if (p && p.catch) p.catch(function () { setStatus('✗ הדפדפן חסם השמעה - צריך ללחוץ פעם אחת בכל מקום בדף'); });
+                        if (SPEECH_LEAD_MS > 0 && startClip.duration && isFinite(startClip.duration)) {
+                            setTimeout(speakNow, Math.max(0, startClip.duration * 1000 - SPEECH_LEAD_MS));
+                        }
+                    }, fallback);
+                }, fallback);
+
+                // ב) אין הקלטות - כל המשפט בקול הדפדפן, ואם אין קול עברי - דינג-דונג
+                function fallback() {
+                    var v = pickHebrewVoice();
+                    setStatus('✗ לא נמצאו הקבצים start.wav ו-end.wav ליד ה-index.html (ולא בתיקייה queue-audio) · ' +
+                        (v ? 'מקריא הכל בקול המחשב: ' + v.name : 'אין קול עברי - יושמע דינג-דונג'));
+                    if (!speak('מטופל ' + n + ', לחדר מספר ' + ANNOUNCE_ROOM, function () {})) dingDong();
                 }
-                once();
+            }
+
+            // לוח הזמנים של הקריאה: דינג-דונג ← הקראה ראשונה ← ... ← הקראה אחרונה סמוך לסוף זמן ההצגה על המסך
+            var announceTimers = [];
+            function cancelAnnouncements() { announceTimers.forEach(clearTimeout); announceTimers = []; }
+            function announce(n, remainingMs) {
+                cancelAnnouncements();
+                var firstAt = CHIME_BEFORE ? CHIME_LEAD_MS : 0;
+                var total = remainingMs > 0 ? remainingMs : 30000;
+                // ההקראה האחרונה מתחילה LAST_READ_BEFORE_END_MS לפני סוף התצוגה (ולא לפני 4 שניות אחרי הראשונה)
+                var lastAt = Math.max(firstAt + 4000, total - LAST_READ_BEFORE_END_MS);
+                if (CHIME_BEFORE) dingDong();
+                for (var i = 0; i < ANNOUNCE_REPEATS; i++) {
+                    var at = ANNOUNCE_REPEATS === 1 ? firstAt : firstAt + i * (lastAt - firstAt) / (ANNOUNCE_REPEATS - 1);
+                    announceTimers.push(setTimeout(function () { readOnce(n); }, at));
+                }
             }
 
             function dingDong() {
@@ -936,6 +942,7 @@
 
             function hide() {
                 overlay.style.display = 'none'; lastKey = '';
+                cancelAnnouncements();                            // קריאות שלא הספיקו להתחיל מתבטלות
                 restoreRadio();                                   // המוזיקה חוזרת
                 if (statusEl) statusEl.style.display = 'none';
                 testMode = false;
@@ -950,7 +957,7 @@
                     numberEl.style.animation = 'none';
                     void numberEl.offsetWidth;
                     numberEl.style.animation = '';
-                    announce(res.number);
+                    announce(res.number, res.remainingMs);
                 }
                 lastKey = key;
                 overlay.style.display = 'flex';
