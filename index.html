@@ -754,7 +754,7 @@
             if (window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = function () {}; }
 
             /* --- צליל "דינג-דונג" בכל קריאה חדשה --- */
-            var SOUND_VOLUME = 0.6; // עוצמה: 0.1 (שקט) עד 1 (חזק)
+            var SOUND_VOLUME = 1;   // עוצמת הדינג-דונג: 0.1 (שקט) עד 1 (חזק)
             var audioCtx = null;
             function getAudio() {
                 if (!audioCtx) {
@@ -771,7 +771,7 @@
                     osc.type = 'sine';
                     osc.frequency.value = freq * p[0];
                     g.gain.setValueAtTime(0.0001, t0);
-                    g.gain.exponentialRampToValueAtTime(Math.max(0.5 * SOUND_VOLUME * p[1], 0.0002), t0 + 0.01);
+                    g.gain.exponentialRampToValueAtTime(Math.max(0.6 * SOUND_VOLUME * p[1], 0.0002), t0 + 0.01);
                     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
                     osc.connect(g); g.connect(c.destination);
                     osc.start(t0); osc.stop(t0 + dur + 0.05);
@@ -786,8 +786,10 @@
             var AUDIO_PATHS = [];
             AUDIO_DIRS.forEach(function (d) { AUDIO_EXTS.forEach(function (x) { AUDIO_PATHS.push({ dir: d, ext: x }); }); });
             var ANNOUNCE_VOLUME = 1;      // 0.1 עד 1
-            var ANNOUNCE_REPEATS = 1;     // כמה פעמים לחזור על ההקראה
-            var ANNOUNCE_GAP_MS = 2500;   // רווח בין חזרות
+            var ANNOUNCE_REPEATS = 2;     // כמה פעמים ההקראה נשמעת (פעמיים, עם הפסקה קטנה ביניהן)
+            var ANNOUNCE_GAP_MS = 2000;   // ההפסקה בין ההקראות
+            var CHIME_BEFORE = true;      // צליל דינג-דונג לפני ההקראה
+            var CHIME_LEAD_MS = 1500;     // כמה זמן אחרי תחילת הדינג-דונג מתחילה ההקראה (אורך הדינג-דונג כ-1.8 שניות)
             var ANNOUNCE_ROOM = 2;
             var SPEECH_LEAD_MS = 70;      // ההפסקה בין "מטופל" למספר: מספר גדול = הפסקה קצרה יותר (150 = כמעט בלי הפסקה), 0 = הפסקה רגילה, מספר שלילי (למשל -200) = הפסקה ארוכה יותר
 
@@ -841,7 +843,11 @@
 
             function announce(n) {
                 var left = ANNOUNCE_REPEATS;
+                var first = true;
                 function once() {
+                    // בפעם הראשונה: קודם דינג-דונג, ואחריו ההקראה
+                    if (first && CHIME_BEFORE) { first = false; dingDong(); setTimeout(once, CHIME_LEAD_MS); return; }
+                    first = false;
                     var again = function () { left--; if (left > 0) setTimeout(once, ANNOUNCE_GAP_MS); };
 
                     // א) פתיחה + סיום מוקלטים בקול שלך, והמספר באמצע בקול הדפדפן
